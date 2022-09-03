@@ -5,3 +5,5 @@
     Quando: for gerado o arquivo "mensagem_capacitacao.csv" é gerado com a opção "Salvar Como"
     Então: enviar e-mail para cada participante encontrado no arquivo "mensagem_capacitacao.csv"
 """
+
+print("Enviando e-mail ...")
