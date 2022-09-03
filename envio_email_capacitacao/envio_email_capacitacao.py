@@ -6,4 +6,9 @@
     Então: enviar e-mail para cada participante encontrado no arquivo "mensagem_capacitacao.csv"
 """
 
-print("Enviando e-mail ...")
+from enviar_mensagem import enviar_email
+
+
+if __name__ == '__main__':
+    print("Enviando e-mail ...")
+    enviar_email("mensagem_capacitacao.csv")
