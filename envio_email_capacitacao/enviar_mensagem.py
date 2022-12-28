@@ -1,10 +1,17 @@
 """Envia mensagem por e-mail a partir do arquivo csv.
 """
 
+fr''
 import pandas as pd  # Usado para ler arquivo .csv
+import numpy
 import smtplib
+from email import encoders
 from email.message import Message
+from email.mime.text import MIMEText 
+from email.mime.base import MIMEBase
+from email.mime.multipart import MIMEMultipart
 import os
+import ssl
 
 
 def enviar_emails(arquvio_csv: str) -> None:
@@ -14,19 +21,24 @@ def enviar_emails(arquvio_csv: str) -> None:
         arquvio_csv (str): nome do arquivo em disco contendo os dados para envio da mensagem.
     """
 
-    dados_das_mensagens  = le_arquivo_com_dados_das_mensagens(arquvio_csv)  # Ex:mensagem_capacitacao.csv
+    dados_das_mensagens = le_arquivo_com_dados_das_mensagens(
+        arquvio_csv)  # Ex:mensagem_capacitacao.csv
 
-
+    contador: int = 0
     for dads_de_uma_mensagem in dados_das_mensagens.itertuples():
 
         # Validar o campo "email"
-        if not(dads_de_uma_mensagem[1] is None or dads_de_uma_mensagem[1] == "" or dads_de_uma_mensagem[1] == "\n"):
-            enviar_email(   email=dads_de_uma_mensagem[1], 
-                            assunto=dads_de_uma_mensagem[2], 
-                            corpo=dads_de_uma_mensagem[3])
+        if not (dads_de_uma_mensagem[1] is None or dads_de_uma_mensagem[1] == "" or dads_de_uma_mensagem[1] == "\n"):
+
+            enviar_email(email=dads_de_uma_mensagem[1],
+                         assunto=dads_de_uma_mensagem[2],
+                         corpo=dads_de_uma_mensagem[3],
+                         anexos= [] if dads_de_uma_mensagem[4]==["Sem anexo"] else dads_de_uma_mensagem[4].split(","))
+            contador += 1
+            print(f"{contador}, ")
 
 
-def le_arquivo_com_dados_das_mensagens(arquivo: str)  -> pd.core.frame.DataFrame:
+def le_arquivo_com_dados_das_mensagens(arquivo: str) -> pd.core.frame.DataFrame:
     """ Ler o arquivo com as mensagens a serem enviadas
         Linha de mensagem finalizada com | (para aceitar enter no meio da mensagem).
 
@@ -37,29 +49,56 @@ def le_arquivo_com_dados_das_mensagens(arquivo: str)  -> pd.core.frame.DataFrame
         pd.core.frame.DataFrame: dataframe pandas contendo as mensagens lidas do arquivo.
     """
 
-    dataframe_com_dados_das_mensagens = pd.read_csv(arquivo, sep='|', header=[0])
+    dataframe_com_dados_das_mensagens = pd.read_csv(
+        arquivo, sep='|', header=[0])
 
     return dataframe_com_dados_das_mensagens
 
 
-def enviar_email(email: str, assunto: str, corpo: str) -> None:
+def enviar_email(email: str, assunto: str, corpo: str, anexos: list) -> None:
     """Envia um única mensagem.
 
     Args:
         email (str): endereço de e-mail para onde a mensagem deve ser enviada.
         assunto (str): Subject da mensagem a ser enviada.
         corpo (str): Texto da mensagem a ser enviada.
+        anexos (list): Relação de nomes, com caminho, dos arquivos anexos.
     """
 
-    msg = Message()
+    # cria o servidor SMTP
+    # context = ssl.create_default_context()
+    server = smtplib.SMTP('smtp.gmail.com', 587)
+    # server = smtplib.SMTP("smtp.gmail.com: 587")
+    # server.starttls()
+    server.ehlo()
+    server.starttls()
+    server.ehlo()
+
+    # Definição do cabeçalho da mensagem.
+    msg = MIMEMultipart() 
     msg['From'] = "joseferreira@lampp-it.com.br"
     msg['To'] = email
     msg['Bcc'] = "joseferreira@lampp-it.com.br"
     msg['Subject'] = assunto
-    msg.add_header("Content-Type", "text/html")
-    msg.set_payload(corpo)
+    msg.add_header("Content-Type", "Content-Transfer-Encoding")
+    
 
-    s = smtplib.SMTP("smtp.gmail.com: 587")
-    s.starttls()
-    s.login(msg['From'], os.environ["PASSWORD"])
-    s.sendmail(msg['From'], [msg['To']], msg.as_string().encode("utf-8"))
+    # Arquivo Anexo
+    # anexos = ["/home/ricardo/Documentos/Trabalho em casa/git cheat sheet.pdf"]
+    # anexos = ["/home/ricardo/Documentos/Trabalho em casa/git cheat sheet.pdf", 
+    #          "/home/ricardo/Documentos/Trabalho em casa/git - book.pdf",
+    #          "/home/ricardo/Documentos/Trabalho em casa/Book Pro Git.pdf", 
+    #          "/home/ricardo/Documentos/Trabalho em casa/github-git-cheat-sheet.pdf"]
+    if anexos != ['Sem anexo']:
+        for anexo in anexos:
+            filename = anexo.rsplit("/", 1)[1].strip()
+            attachment = MIMEBase('application', 'octet-stream')
+            with open(anexo.strip(), 'rb') as f:
+                attachment.set_payload(f.read())
+            encoders.encode_base64(attachment)
+            attachment.add_header('Content-Disposition', "attachment; filename= %s" % filename) 
+            msg.attach(attachment)
+  
+    msg.attach(MIMEText(corpo, 'html')) 
+    server.login(msg['From'], "lA2021,.aL&uk")  # os.environ["PASSWORD"])
+    server.sendmail(msg['From'], [msg['To'], msg['Bcc']], msg.as_string().encode("utf-8"))
