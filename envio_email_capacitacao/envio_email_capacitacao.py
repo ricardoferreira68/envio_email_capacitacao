@@ -11,5 +11,5 @@ from enviar_mensagem import enviar_emails
 
 if __name__ == "__main__":
     print("Enviando e-mails ...")
-    enviar_emails("mensagem_capacitacao.csv")
+    enviar_emails("mensagem.csv")
     print("e-mails envidados ...")

@@ -76,7 +76,8 @@ def enviar_email(email: str, assunto: str, corpo: str, anexos: list) -> None:
     msg = MIMEMultipart() 
     msg['From'] = "joseferreira@lampp-it.com.br"
     msg['To'] = email
-    msg['Cc'] = ""  # "dp@lampp-it.com.br"
+    # msg['Cc'] = ""
+    msg['Cc'] = "dp@lampp-it.com.br"
     msg['Cc2'] = "joseferreira@lampp-it.com.br"  # Cópia oculta.
     msg['Subject'] = assunto
     msg.add_header("Content-Type", "Content-Transfer-Encoding")

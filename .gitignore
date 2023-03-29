@@ -5,6 +5,6 @@
 .secrets
 poetry.lock
 #__pycache__
-# mensagem_capacitacao.csv
+mensagem.csv
 pdf_files
 *.pdf
